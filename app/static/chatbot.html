@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot V2 - Muebles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fafafa;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #fce8f0;
+            color: #333;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .header h1 {
+            margin-bottom: 5px;
+            font-weight: 400;
+            font-size: 1.5em;
+        }
+        .header a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #fafafa;
+        }
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.user {
+            align-self: flex-end;
+            background-color: #fce8f0;
+            color: #333;
+        }
+        .message.bot {
+            align-self: flex-start;
+            background-color: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        .message .time {
+            font-size: 0.75em;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+        .chat-footer {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+        .chat-footer input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .chat-footer input:focus {
+            outline: none;
+            border-color: #fce8f0;
+        }
+        .chat-footer button {
+            padding: 12px 24px;
+            background-color: #fce8f0;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .chat-footer button:hover {
+            background-color: #f9d4e3;
+        }
+        .chat-footer button:disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+            color: #999;
+        }
+        .typing-indicator {
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            gap: 5px;
+        }
+        .typing-indicator .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #fce8f0;
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
+        .typing-indicator .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ChatBot Toy Project de TecnoNodo</h1>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-body" id="chatBody">
+            <div class="message bot">
+                <div class="time">Chatbot - <span id="initial-time"></span></div>
+                <div>Hola! Bienvenido a TecnoNodo. Soy Clippo, un asistente virtual estoy aqui para asesorarte en esta compra. ¿En qué puedo ayudarte?</div>
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chatInput" placeholder="Escribe tu mensaje..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()" id="sendButton">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('initial-time').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Id único por navegador, para que cada persona tenga su propio historial
+        let fallbackChatId = null;
+        function getChatId() {
+            try {
+                let id = localStorage.getItem('chat_id');
+                if (!id) {
+                    id = crypto.randomUUID();
+                    localStorage.setItem('chat_id', id);
+                }
+                return id;
+            } catch (e) {
+                // Storage bloqueado: id válido solo mientras la página siga abierta
+                if (!fallbackChatId) fallbackChatId = crypto.randomUUID();
+                return fallbackChatId;
+            }
+        }
+
+        function sendMessage() {
+            const chatBody = document.getElementById('chatBody');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const message = chatInput.value.trim();
+
+            if (!message) return;
+
+            const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            chatBody.innerHTML += `<div class="message user"><div class="time">Tú - ${currentTime}</div><div>${message}</div></div>`;
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendButton.disabled = true;
+
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            chatBody.appendChild(typingIndicator);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            fetch('/api/v1/bot/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: getChatId(), message: message })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.detail || `Error ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                chatBody.removeChild(typingIndicator);
+                const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                chatBody.innerHTML += `<div class="message bot"><div class="time">Chatbot - ${botTime}</div><div>${data.response}</div></div>`;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                chatBody.removeChild(typingIndicator);
+                const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                chatBody.innerHTML += `<div class="message bot"><div class="time">Chatbot - ${botTime}</div><div>Error: ${error.message}</div></div>`;
+                chatBody.scrollTop = chatBody.scrollHeight;
+            })
+            .finally(() => {
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.focus();
+            });
+        }
+    </script>
+</body>
+</html>
