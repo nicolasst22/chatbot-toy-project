@@ -8,6 +8,7 @@ from langchain_classic.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langsmith import traceable
 
 from app.core.config import DEV_ENV, settings
+from app.services.agents.sales import AGENT_STOPPED_OUTPUT
 from app.services.agents.tools import create_search_policies_tool
 
 
@@ -56,7 +57,11 @@ class PoliciesAgent:
                     "input": userPrompt,
                     "chat_history": history["chat_history"]
                 })
-                answer = result["output"] 
+                answer = result["output"]
+                # Se corta antes de save_context para que ese texto no quede en la memoria.
+                if answer == AGENT_STOPPED_OUTPUT:
+                    logger.warning("El agente de políticas llegó a max_iterations (input=%r)", userPrompt)
+                    return "No pude resolver tu consulta. ¿Puedes reformularla o hacerla más específica?"
                 memory.save_context({"question": userPrompt}, {"answer": answer})
             except Exception:
                 logger.exception("Falló el agente de ventas")

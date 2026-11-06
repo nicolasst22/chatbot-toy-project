@@ -1,19 +1,22 @@
 # HW Chatbot Toy Proyect 
 
-Chatbot de asesoría de productos de hardware: un agente de ventas (FastAPI + LangChain + ChromaDB + SQLite) que busca productos con RAG y consulta precio y stock en una base de datos.
+Chatbot de asesoría de hardware con un router y dos agentes: ventas (catálogo, precio y stock) y políticas de la tienda (FastAPI + LangChain + ChromaDB + SQLite).
 
 ## Cómo funciona
 
-`POST /api/v1/bot/` → `ChatbotService` → `SalesAgent` (agente con tool calling). El LLM decide qué herramientas usar:
+`POST /api/v1/bot/` → `ChatbotService` → `AgentRouter` → `SalesAgent` o `PoliciesAgent` (agentes con tool calling). El LLM de cada agente decide qué herramientas usar:
 
-| Tool | Fuente | Para qué |
-|---|---|---|
-| `search_products` | ChromaDB (RAG, `k=20`) | Buscar productos, specs y compatibilidad. Devuelve también el SKU |
-| `get_price_and_stock` | SQLite `data/db/tienda.db` (solo lectura) | Precio en USD y disponibilidad a partir del SKU |
+| Agente | Tool | Fuente | Para qué |
+|---|---|---|---|
+| `SalesAgent` | `search_products` | ChromaDB, colección `productos` (RAG, `k=20`) | Buscar productos, specs y compatibilidad. Devuelve también el SKU |
+| `SalesAgent` | `get_price_and_stock` | SQLite `data/db/tienda.db` (solo lectura) | Precio en USD y disponibilidad a partir del SKU |
+| `PoliciesAgent` | `search_policies` | ChromaDB, colección `politicas` (RAG, `k=5`) | Garantía, envíos, cambios y devoluciones, medios de pago, productos importados, servicio técnico, dirección y horarios |
+
+**Router** (`app/services/router.py`): elige el agente en tres capas. Primero por reglas (palabras clave de ventas o de políticas); si no hay un ganador claro, le pregunta al LLM; y si eso falla, usa `sales` como respaldo.
 
 - El precio y el stock se obtienen siempre en dos pasos: primero `search_products` (para el SKU) y después `get_price_and_stock`.
-- El agente responde solo con lo que devuelven las tools, no revela la cantidad exacta en stock y rechaza temas que no sean hardware.
-- La memoria es por `chat_id` (`ConversationSummaryBufferMemory`, en RAM: se pierde al reiniciar el servidor).
+- Los agentes responden solo con lo que devuelven sus tools. El de ventas no revela la cantidad exacta en stock y ambos rechazan temas fuera de su área.
+- La memoria es por `chat_id` y se comparte entre ambos agentes (`ConversationSummaryBufferMemory`, en RAM: se pierde al reiniciar el servidor).
 
 ## Requisitos
 
@@ -29,7 +32,9 @@ Opcional: variables `LANGSMITH_*` en el `.env` para trazar las llamadas con Lang
 
 Los datos ya están incluidos:
 
-- `data/chroma_db/` — base vectorial de productos (colección `productos`)
+- `data/chroma_db/` — base vectorial con las colecciones `productos` y `politicas`
+- `data/raw/politicas/` — documentos de políticas (markdown), origen de la colección `politicas`. Se cargan con `python scripts/ingest_policies.py`
+- `data/raw/otros/` — documentos de apoyo que hoy no usa la app (glosario de abreviaturas, stock y reservas)
 - `data/db/tienda.db` — SQLite con `productos`, `categorias`, `equivalencias`, `cotizacion`, `zonas_envio` y las vistas `v_disponibles` y `v_alternativas_con_stock`
 - `data/raw/productos.json` — catálogo original, solo de referencia (la app no lo lee; usa Chroma y `tienda.db`)
 
@@ -73,16 +78,22 @@ app/
     routes/bot.py              # endpoint del chat
   models/chatbot.py            # ChatRequest / ChatResponse
   services/
-    chatService.py             # ChatbotService: LLM, Chroma, memorias por chat_id y SalesAgent
+    chatService.py             # ChatbotService: LLM, Chroma, memorias por chat_id, router y agentes
+    router.py                  # AgentRouter: reglas, LLM y respaldo
     agents/
       sales.py                 # SalesAgent: system prompt + AgentExecutor
-      tools.py                 # search_products y get_price_and_stock
+      policies.py              # PoliciesAgent: system prompt + AgentExecutor
+      tools.py                 # search_products, get_price_and_stock y search_policies
   helpers/
     retriever_with_specs.py    # RetrieverWithSpecs: agrega las specs a los documentos del retriever
   core/config.py               # settings desde .env, DB_PATH
   static/chatbot.html          # UI del chat
+scripts/ingest_policies.py     # carga data/raw/politicas en la colección politicas
+tests/test_router.py           # tests del router (python -m pytest)
 data/
-  chroma_db/                   # base vectorial de productos
+  chroma_db/                   # base vectorial (productos y politicas)
   db/tienda.db                 # precios y stock
   raw/productos.json           # catálogo original (solo referencia)
+  raw/politicas/               # documentos de políticas
+  raw/otros/                   # documentos de apoyo (no usados por la app)
 ```

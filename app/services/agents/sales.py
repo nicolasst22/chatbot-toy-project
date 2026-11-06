@@ -28,6 +28,10 @@ IMPORTANTE:
 """
 logger = logging.getLogger(__name__)
 
+# Texto fijo que langchain_classic devuelve como "respuesta" al llegar a max_iterations (no lanza excepción).
+# Viene de AgentExecutor.return_stopped_response; si se actualiza langchain, verificar que siga igual.
+AGENT_STOPPED_OUTPUT = "Agent stopped due to max iterations."
+
 class SalesAgent:
     """
          Agente que usa herramientas de acceso al RAG de productos y a la base de datos sqlite.
@@ -54,7 +58,8 @@ class SalesAgent:
         ])
         
         agent = create_tool_calling_agent(llm, self.tools, self.prompt)
-        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV), max_iterations=5, handle_parsing_errors=True)
+        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV),
+                                       max_iterations=5, handle_parsing_errors=True)
 
     @traceable
     def chat(self, userPrompt, memory: BaseMemory):
@@ -66,7 +71,11 @@ class SalesAgent:
                 "input": userPrompt,
                 "chat_history": history["chat_history"]
             })
-            answer = result["output"] 
+            answer = result["output"]
+            # Se corta antes de save_context para que ese texto no quede en la memoria.
+            if answer == AGENT_STOPPED_OUTPUT:
+                logger.warning("El agente de ventas llegó a max_iterations (input=%r)", userPrompt)
+                return "No pude resolver tu consulta. ¿Puedes reformularla o hacerla más específica?"
             memory.save_context({"question": userPrompt}, {"answer": answer})
         except Exception:
             logger.exception("Falló el agente de ventas")
