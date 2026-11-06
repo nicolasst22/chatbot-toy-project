@@ -8,7 +8,9 @@ from app.core.config import DB_PATH, settings
 
 from langsmith import traceable
 
+from app.services.agents.policies import PoliciesAgent
 from app.services.agents.sales import SalesAgent
+from app.services.router import AgentRouter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,17 +29,30 @@ class ChatbotService:
         )
         logger.info("ChatbotService inicializado")
         embeddings = OpenAIEmbeddings(openai_api_key=settings.openai_api_key)
-        self.vectorstore = Chroma(
+        self.productsVectorStore = Chroma(
             collection_name="productos", 
             embedding_function=embeddings,
             persist_directory=str(CHROMA_DIR),
         )
-        self.retriever = self.vectorstore.as_retriever(
+        self.productsRetriever = self.productsVectorStore.as_retriever(
             search_type="similarity",  # Tipo de búsqueda: similarity o mmr
             search_kwargs={"k": 20}      # Número de documentos a recuperar
         )
+        self.policiesVectorStore = Chroma(
+                    collection_name="politicas", 
+                    embedding_function=embeddings,
+                    persist_directory=str(CHROMA_DIR),
+                )
+        self.policiesRetriever = self.policiesVectorStore.as_retriever(
+                    search_type="similarity",  # Tipo de búsqueda: similarity o mmr
+                    search_kwargs={"k": 5}     # Número de documentos a recuperar
+                )
+        self.router = AgentRouter(llm=self.llm)
+        self.agents = {
+            "sales": SalesAgent(llm=self.llm, retriever=self.productsRetriever, db=DB_PATH.as_uri()),
+            "policies":  PoliciesAgent(llm=self.llm, retriever=self.policiesRetriever, db=DB_PATH.as_uri())
+            }
         self.memories: dict[str, ConversationSummaryBufferMemory] = {}
-        self.salesAgent = SalesAgent(llm=self.llm, retriever=self.retriever, db=DB_PATH.as_uri()) 
 
     def _get_memory(self, chat_id: str) -> ConversationSummaryBufferMemory:
         if chat_id not in self.memories:
@@ -53,7 +68,9 @@ class ChatbotService:
 
     @traceable
     def chat(self, userPrompt, chat_id):
-        history = self._get_memory(chat_id)
-        response = self.salesAgent.chat(userPrompt, history)
-        print(response)
+        memory = self._get_memory(chat_id)
+        route = self.router.route(userPrompt=userPrompt, memory=memory)
+        # print(route)
+        agent =  self.agents[route]
+        response = agent.chat(userPrompt, memory)
         return response

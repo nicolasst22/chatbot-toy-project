@@ -4,9 +4,8 @@ from langchain_classic.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_classic.base_memory import BaseMemory
 from langsmith import traceable
-
-
 from app.services.agents.tools import create_search_products_tool, create_price_stock_tool
+from app.core.config import settings, DEV_ENV
 
 
 system_prompt = """Eres un experto en hardware, con conocimientos profundos de productos y su compatibilidad que asesora al cliente para encontrar lo que necesita o busca.
@@ -40,11 +39,8 @@ class SalesAgent:
         una memoria externa (ej. la que maneje un router); si no se pasa, usa una propia por chat_id.
     """   
     def __init__(self, llm, retriever, db):
-        
-        
         self.llm = llm
         self.retriever = retriever
-
 
         search_products = create_search_products_tool(retriever)
         get_price_stock = create_price_stock_tool(db)
@@ -58,7 +54,7 @@ class SalesAgent:
         ])
         
         agent = create_tool_calling_agent(llm, self.tools, self.prompt)
-        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=True, max_iterations=5, handle_parsing_errors=True)
+        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV), max_iterations=5, handle_parsing_errors=True)
 
     @traceable
     def chat(self, userPrompt, memory: BaseMemory):

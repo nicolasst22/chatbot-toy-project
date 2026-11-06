@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Modelo de datos para las peticiones del chatbot
 # Pydantic valida automáticamente que los datos recibidos cumplan con este esquema
@@ -11,7 +11,7 @@ class ChatRequest(BaseModel):
         message: El mensaje o pregunta del usuario
     """
     chat_id: str  # ID de la conversación (ej: "user-123", "session-abc")
-    message: str  # Pregunta o mensaje del usuario (ej: "¿Tienes sofás?")
+    message: str = Field(max_length=1000)  # Pregunta o mensaje del usuario (ej: "¿Tienes sofás?")
 
 # Modelo de datos para las respuestas del chatbot
 class ChatResponse(BaseModel):

@@ -209,6 +209,9 @@
                 body: JSON.stringify({ chat_id: getChatId(), message: message })
             })
             .then(response => {
+                if (response.status === 422) {
+                    throw new Error('Tu mensaje es demasiado largo. Intenta con uno más corto.');
+                }
                 if (!response.ok) {
                     return response.json().then(err => {
                         throw new Error(err.detail || `Error ${response.status}`);

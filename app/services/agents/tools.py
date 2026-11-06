@@ -85,6 +85,34 @@ def create_price_stock_tool(db_uri):
 
     return get_price_and_stock        
         
+def create_search_policies_tool(retriever: BaseRetriever):
 
+    @tool
+    def search_policies(query: str):
+        """
+            Busca dentro de las politicas de la compañia temas acerca de garantía, envíos, cambios y devoluciones, medios de pago, productos importados, servicio técnico, dirección y horarios.
+            Usala cuando el cliente pregunte acerca sobre esos temas o temas relacionados a la compañia y sus politicas. 
 
+            query: texto en español que describe lo que se busca. Ejemplo: "horarios de atención".
+
+            Devuelve una lista numerada documentos con datos referidos a las politicas. Si no encuentra nada, devuelve
+            "Sin resultados."  
+        """
+        try:
+            relevant_docs = retriever.invoke(query)
+        except Exception:
+            logger.exception("Falló la búsqueda de productos (query=%r)", query)
+            raise
+
+        logger.info("search_products(%r): %d documentos recuperados", query, len(relevant_docs))
+        if not relevant_docs:
+            return "Sin resultados."
+
+        lineas = []
+        for numero, doc in enumerate(relevant_docs, start=1):
+            lineas.append(f"{numero}. {doc.page_content}")
+
+        return "\n".join(lineas)
+
+    return search_policies
     
