@@ -8,11 +8,11 @@ tema: general
 
 ## ¿Dónde queda la tienda? ¿Cuál es la dirección?
 
-La dirección de TecnoNodo es Av. Inventada 650, Palermo, CABA. Es nuestra única ubicación: ahí está la sucursal donde se puede comprar, retirar pedidos y llevar productos por garantía.
+La dirección de Prompt Hardware es Av. Inventada 650, Posadas, Misiones. Es nuestra única ubicación: ahí está la sucursal donde se puede comprar, retirar pedidos y llevar productos por garantía.
 
 ## ¿En qué horario atienden?
 
-La sucursal de TecnoNodo atiende de lunes a viernes de 8 a 18 h. Los sábados y domingos está cerrada. La atención por chat y teléfono es de lunes a viernes de 9 a 18 h. El asistente virtual responde todos los días a toda hora, pero las reservas y pagos se confirman en horario hábil.
+La sucursal de Prompt Hardware atiende de lunes a viernes de 8 a 18 h. Los sábados y domingos está cerrada. La atención por chat y teléfono es de lunes a viernes de 9 a 18 h. El asistente virtual responde todos los días a toda hora, pero las reservas y pagos se confirman en horario hábil.
 
 ## ¿Los productos son nuevos?
 

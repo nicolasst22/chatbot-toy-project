@@ -14,7 +14,7 @@ from app.services.agents.tools import create_search_policies_tool
 
 logger = logging.getLogger(__name__)
 
-system_prompt = """Eres un asesor al cliente, experto en las politicas de la compañia, con conocimientos profundos garantía, envíos, cambios y devoluciones, medios de pago, productos importados, servicio técnico, dirección y horarios de atención.
+system_prompt = """Eres un asesor al cliente, experto en las politicas de la compañia, con conocimientos profundos garantía, envíos, cambios y devoluciones, medios de pago, productos importados, servicio técnico, dirección y horarios de atención, e información institucional de la compañía (quiénes somos, historia, equipo, contacto).
     Responde la pregunta en base a los datos de herramientas y no inventes información que no sea devuelto estrictamente por la herramienta, ni plazos, porcentajes ni condiciones, nada. Solo utiliza información que te devuelven las tools. 
     Tienes acceso a estas herramientas:
         {tools}

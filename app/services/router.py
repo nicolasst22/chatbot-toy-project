@@ -5,13 +5,13 @@ from langchain_core.messages import get_buffer_string
 
 router_prompt = """Clasificá el último mensaje del cliente en UNA categoría:
 - sales: pregunta por precio, costo, stock, disponibilidad, si hay, o quiere comprar. Sobre hardware (especificaciones, caracteristicas, compatibilidad, recomendaciones, comparaciones).
-- policies: preguntas acerca de garantía, envíos de productos, cambios y devoluciones (devolver) de productos por cualquier motivo, medios de pago, productos importados, servicio técnico, dirección y horarios. 
+- policies: preguntas acerca de garantía, envíos de productos, cambios y devoluciones (devolver) de productos por cualquier motivo, medios de pago, productos importados, servicio técnico, dirección y horarios. También información sobre la empresa Prompt Hardware: quiénes son, historia, equipo, contacto, redes, el asistente Clippo.
 Usá el historial para entender mensajes cortos, dando mas relevancia a ultimos mensajes, como "¿y cuánto sale?".
 Respondé solo con una palabra: sales o policies"""
 
 class AgentRouter:
 
-    POLICY_WORDS = {"garantia", "envio", "envios", "devolucion", "devolver", "reembolso", "politica", "politicas", "horario", "horarios"}
+    POLICY_WORDS = {"garantia", "envio", "envios", "devolucion", "devolver", "reembolso", "politica", "politicas", "horario", "horarios", "quienes", "empresa", "compania", "historia", "contacto", "telefono", "direccion"}
     SALES_WORDS = {"precio", "cuesta", "cuanto", "stock", "disponible", "disponibilidad", "comprar"}
 
     

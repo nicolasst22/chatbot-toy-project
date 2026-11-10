@@ -39,4 +39,4 @@ En Apple, el sufijo del código indica el mercado: `LL/A` es Estados Unidos (tec
 
 ## Garantías de distribuidor
 
-`GTA BRASIL`, `GTA BR` o `GTA.PY` indican que la garantía extendida del fabricante se gestiona a través del distribuidor de Brasil o Paraguay. Para el cliente no cambia nada: el trámite lo hace TecnoNodo (ver la política de garantía).
+`GTA BRASIL`, `GTA BR` o `GTA.PY` indican que la garantía extendida del fabricante se gestiona a través del distribuidor de Brasil o Paraguay. Para el cliente no cambia nada: el trámite lo hace Prompt Hardware (ver la política de garantía).

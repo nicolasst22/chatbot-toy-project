@@ -12,7 +12,7 @@ Todos los productos nuevos tienen una garantía mínima de 12 meses desde la fec
 
 Algunos productos tienen una garantía más larga porque el fabricante la ofrece a través de su distribuidor. En la lista de precios eso aparece con abreviaturas como `1GTA.PY`, `3GTA.BR-PY` o `(2 ANOS GTA BR)`: el número indica los años de garantía. Por ejemplo, una placa de video con `3GTA.BR-PY` tiene 3 años (36 meses).
 
-La garantía de TecnoNodo no reemplaza los derechos que da la Ley 24.240 de Defensa del Consumidor.
+La garantía de Prompt Hardware no reemplaza los derechos que da la Ley 24.240 de Defensa del Consumidor.
 
 ## Falla de fábrica en los primeros 7 días
 
@@ -26,7 +26,7 @@ Si un producto llega sin funcionar o falla dentro de los 7 días corridos desde 
 4. El técnico revisa el equipo en un plazo de hasta 10 días hábiles. Si la falla está cubierta, reparamos o reemplazamos.
 5. Productos con garantía directa del fabricante (por ejemplo, Apple, Garmin, DJI): los gestionamos nosotros ante el servicio técnico oficial, y el plazo depende del fabricante (normalmente 15 a 30 días).
 
-El envío del producto en garantía es gratis dentro de los primeros 30 días desde la compra; después, el envío a la tienda corre por cuenta del cliente y la devolución por cuenta de TecnoNodo.
+El envío del producto en garantía es gratis dentro de los primeros 30 días desde la compra; después, el envío a la tienda corre por cuenta del cliente y la devolución por cuenta de Prompt Hardware.
 
 ## Qué no cubre la garantía
 

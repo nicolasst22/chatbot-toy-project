@@ -1,9 +1,18 @@
+import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_text_splitters.markdown import MarkdownHeaderTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 import os
+
+parser = argparse.ArgumentParser(description="Ingesta los documentos de politicas en Chroma.")
+parser.add_argument(
+    "--overwrite",
+    action="store_true",
+    help="si un archivo ya esta cargado, borra sus chunks y lo vuelve a cargar (por defecto se saltea)",
+)
+args = parser.parse_args()
 
 folder = Path("data/raw/politicas")
 load_dotenv()
@@ -43,8 +52,13 @@ for file in sorted(folder.glob("*.md")):
 
     loaded = vectorstore.get(where={"source": file.name})["ids"]
     if loaded:
-        continue 
-    
+        if not args.overwrite:
+            print(f"{file.name}: ya cargado, se saltea (usar --overwrite para reemplazarlo)")
+            continue
+        vectorstore.delete(ids=loaded)
+        print(f"{file.name}: {len(loaded)} chunks borrados")
+
     vectorstore.add_documents(chunks)
+    print(f"{file.name}: {len(chunks)} chunks cargados")
 
 

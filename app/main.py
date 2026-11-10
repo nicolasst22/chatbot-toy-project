@@ -3,6 +3,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title=settings.project_name)
 app.include_router(api_router, prefix=settings.api_prefix)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.get("/health")
 def health() -> dict[str, str]:

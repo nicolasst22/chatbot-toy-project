@@ -8,7 +8,7 @@ tema: servicios
 
 ## Armado de PC
 
-Si el cliente compra todos los componentes principales en TecnoNodo (procesador, motherboard, memoria, almacenamiento, fuente y gabinete), armamos la PC por USD 40. Si además compra la placa de video y el cooler en la tienda, el armado es gratis.
+Si el cliente compra todos los componentes principales en Prompt Hardware (procesador, motherboard, memoria, almacenamiento, fuente y gabinete), armamos la PC por USD 40. Si además compra la placa de video y el cooler en la tienda, el armado es gratis.
 
 El servicio incluye:
 

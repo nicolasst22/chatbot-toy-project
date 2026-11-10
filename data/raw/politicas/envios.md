@@ -4,7 +4,7 @@ tipo_doc: politica
 tema: envios
 ---
 
-# Política de envíos de TecnoNodo
+# Política de envíos de Prompt Hardware
 
 ## Cobertura
 
@@ -12,12 +12,10 @@ Enviamos a todo el país. El costo y el plazo dependen de la zona de destino y d
 
 | Zona | Destinos | Plazo estimado |
 |---|---|---|
-| CABA | Ciudad Autónoma de Buenos Aires | 1 a 2 días hábiles |
-| AMBA | Conurbano bonaerense | 1 a 3 días hábiles |
-| CENTRO | Córdoba, Santa Fe, Entre Ríos, resto de Buenos Aires, La Pampa | 2 a 5 días hábiles |
-| CUYO_NOA_NEA | Mendoza, San Juan, San Luis, NOA y NEA | 3 a 7 días hábiles |
-| PATAGONIA | Neuquén, Río Negro, Chubut, Santa Cruz, Tierra del Fuego | 4 a 9 días hábiles |
-| RETIRO | Retiro en sucursal (Palermo, CABA) | Desde el día hábil siguiente |
+| POSADAS | Ciudad de Posadas | 1 a 2 días hábiles |
+| MISIONES | Resto de la provincia de Misiones | 1 a 3 días hábiles |
+| RESTO_PAIS | Resto de las provincias del país | 2 a 5 días hábiles |
+| RETIRO | Retiro en sucursal (Posadas, Misiones) | Desde el día hábil siguiente |
 
 Los plazos corren desde que se acredita el pago, no desde que se hace el pedido.
 
@@ -37,7 +35,7 @@ Pesos de referencia que usa la tienda cuando el producto no tiene peso cargado:
 
 ## Envío gratis
 
-Cada zona tiene un monto mínimo de compra (en USD) a partir del cual el envío es gratis: USD 300 en CABA, USD 400 en AMBA, USD 600 en la zona Centro y USD 900 en Cuyo, NOA y NEA. La Patagonia no tiene envío gratis por el costo del transporte, pero sí un 50 % de descuento en el envío para compras de más de USD 1.200.
+Cada zona tiene un monto mínimo de compra (en USD) a partir del cual el envío es gratis: USD 300 en Posadas, USD 400 en el resto de Misiones y USD 600 en el resto del país.
 
 El envío gratis no aplica a televisores de 65" o más, sillas ni gabinetes full tower, que siempre se cotizan aparte.
 
@@ -49,7 +47,7 @@ Si el paquete llega con la caja golpeada, abierta o mojada, el cliente debe deja
 
 ## Retiro en sucursal
 
-El retiro en la sucursal de Palermo es gratis. El pedido queda reservado 5 días hábiles desde que avisamos que está listo. Puede retirar otra persona con el número de pedido y una foto del DNI del titular.
+El retiro en la sucursal de Posadas, Misiones, es gratis. El pedido queda reservado 5 días hábiles desde que avisamos que está listo. Puede retirar otra persona con el número de pedido y una foto del DNI del titular.
 
 ## Seguimiento
 

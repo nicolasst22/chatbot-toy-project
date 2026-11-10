@@ -13,7 +13,7 @@ Las compras hechas por la web, el chat o por teléfono se pueden cancelar dentro
 Condiciones:
 
 - El producto tiene que estar sin uso, completo, con todos sus accesorios, manuales y embalaje.
-- El costo del envío de vuelta lo paga TecnoNodo.
+- El costo del envío de vuelta lo paga Prompt Hardware.
 - El reintegro se hace por el mismo medio de pago, dentro de los 10 días hábiles de recibido el producto.
 
 ## Cambio por otro producto
