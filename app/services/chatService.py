@@ -50,7 +50,7 @@ class ChatbotService:
         self.router = AgentRouter(llm=self.llm)
         self.agents = {
             "sales": SalesAgent(llm=self.llm, retriever=self.productsRetriever, db=DB_PATH.as_uri()),
-            "policies":  PoliciesAgent(llm=self.llm, retriever=self.policiesRetriever, db=DB_PATH.as_uri())
+            "policies": PoliciesAgent(llm=self.llm, retriever=self.policiesRetriever, db=DB_PATH.as_uri())
             }
         self.memories: dict[str, ConversationSummaryBufferMemory] = {}
 
@@ -67,10 +67,10 @@ class ChatbotService:
         return self.memories[chat_id]
 
     @traceable
-    def chat(self, userPrompt, chat_id):
+    async def chat(self, userPrompt, chat_id):
         memory = self._get_memory(chat_id)
         route = self.router.route(userPrompt=userPrompt, memory=memory)
         # print(route)
         agent =  self.agents[route]
-        response = agent.chat(userPrompt, memory)
+        response = await agent.chat(userPrompt, memory)
         return response

@@ -48,7 +48,7 @@ class PoliciesAgent:
                 self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=settings.environment == DEV_ENV, max_iterations=5, handle_parsing_errors=True)
 
     @traceable
-    def chat(self, userPrompt, memory: BaseMemory):
+    async def chat(self, userPrompt, memory: BaseMemory):
             result = ""
             history = memory.load_memory_variables({})
             try:

@@ -6,6 +6,7 @@ from langchain_classic.base_memory import BaseMemory
 from langsmith import traceable
 from app.services.agents.tools import create_search_products_tool, create_price_stock_tool
 from app.core.config import settings, DEV_ENV
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
 
 system_prompt = """Eres un experto en hardware, con conocimientos profundos de productos y su compatibilidad que asesora al cliente para encontrar lo que necesita o busca.
@@ -25,6 +26,8 @@ IMPORTANTE:
 * Estilo: En español (siempre español), directo, amable, máximo ~100 palabras, sin mencionar "herramienta" ni "contexto" o ese tipo de cosas que un humano no usaria. Presenta la info de manera legible para el humano
 * Solo puedes hablar de temas relacionados a hardware y componentes de la tienda, lo que te devuelvas las tools.
 * Rechazas amablemente otro tema de conversacion sea cual sea que no tenga objetivo la asistencia tecnica de venta, tal y como lo haria un vendedor que no quiere perder el tiempo
+* Si el la tool de search_productos no te devuelve resultados acorde a la los terminos del usuario utiliza un sinonimo. Ej placa madre = motherboard
+* Para la cotizacion utiliza tus herramientas. una vez que tengas el tipo de cambio multiplica el tipo de cambio por el valor en dolares y responde el valor al tipo de cambio actual indicando que tipo de cambio tomaste para el calculo. 
 """
 logger = logging.getLogger(__name__)
 
@@ -32,9 +35,18 @@ logger = logging.getLogger(__name__)
 # Viene de AgentExecutor.return_stopped_response; si se actualiza langchain, verificar que siga igual.
 AGENT_STOPPED_OUTPUT = "Agent stopped due to max iterations."
 
+server_config = {
+    "servidor_local": {
+        "transport": "streamable_http",
+        "url": "http://localhost:8001/mcp",
+    }
+}
+
+mcp_client = MultiServerMCPClient(server_config)
+
 class SalesAgent:
     """
-         Agente que usa herramientas de acceso al RAG de productos y a la base de datos sqlite.
+        Agente que usa herramientas de acceso al RAG de productos y a la base de datos sqlite.
     
         A diferencia de ChatbotService (que SIEMPRE busca en el retriever antes de responder),
         acá el LLM decide si buscar, qué buscar y cuántas veces.
@@ -42,14 +54,23 @@ class SalesAgent:
         Memoria: ConversationSummaryBufferMemory (los mensajes viejos se resumen). `chat()` acepta
         una memoria externa (ej. la que maneje un router); si no se pasa, usa una propia por chat_id.
     """   
+
+    executor = None
+    async def initialize(self):
+        mcp_tools = await mcp_client.get_tools();
+        print(mcp_tools)
+        self.tools = [self.search_products, self.get_price_stock] + mcp_tools
+        self.tool_names = ", ".join(t.name for t in self.tools)
+        print(self.tool_names)
+        agent = create_tool_calling_agent(self.llm, self.tools, self.prompt)
+        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV),
+                                               max_iterations=5, handle_parsing_errors=True)
+
     def __init__(self, llm, retriever, db):
         self.llm = llm
         self.retriever = retriever
-
-        search_products = create_search_products_tool(retriever)
-        get_price_stock = create_price_stock_tool(db)
-        self.tools = [search_products, get_price_stock]
-        self.tool_names = ", ".join(t.name for t in self.tools)
+        self.search_products = create_search_products_tool(retriever)
+        self.get_price_stock = create_price_stock_tool(db)
         self.prompt = ChatPromptTemplate.from_messages([
                      ("system", system_prompt),
                      MessagesPlaceholder("chat_history"),
@@ -57,16 +78,15 @@ class SalesAgent:
                     MessagesPlaceholder("agent_scratchpad"),
         ])
         
-        agent = create_tool_calling_agent(llm, self.tools, self.prompt)
-        self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV),
-                                       max_iterations=5, handle_parsing_errors=True)
-
     @traceable
-    def chat(self, userPrompt, memory: BaseMemory):
+    async def chat(self, userPrompt, memory: BaseMemory):
+        if self.executor is None:      # lazy loading
+            await self.initialize()
+        
         result = ""
         history = memory.load_memory_variables({})
         try:
-            result = self.executor.invoke({
+            result = await self.executor.ainvoke({
                 "tools": self.tool_names,
                 "input": userPrompt,
                 "chat_history": history["chat_history"]
