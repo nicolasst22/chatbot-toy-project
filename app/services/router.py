@@ -7,7 +7,7 @@ router_prompt = """Clasificá el último mensaje del cliente en UNA categoría:
 - sales: pregunta por precio, costo, stock, disponibilidad, si hay, o quiere comprar. Sobre hardware (especificaciones, caracteristicas, compatibilidad, recomendaciones, comparaciones).
 - policies: preguntas acerca de garantía, envíos de productos, cambios y devoluciones (devolver) de productos por cualquier motivo, medios de pago, productos importados, servicio técnico, dirección y horarios. También información sobre la empresa Prompt Hardware: quiénes son, historia, equipo, contacto, redes, el asistente Clippo.
 Usá el historial para entender mensajes cortos, dando mas relevancia a ultimos mensajes, como "¿y cuánto sale?".
-Respondé solo con una palabra: sales o policies"""
+Respondé solo con una palabra: "sales" o "policies". Siempre esas 2 opciones. NO las traduzcas"""
 
 class AgentRouter:
 

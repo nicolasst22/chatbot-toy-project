@@ -2,7 +2,7 @@ from mcp.server.fastmcp import FastMCP
 from pydantic import Field
 import requests
 
-mcp = FastMCP("product_mcp_server", port=8001)
+mcp = FastMCP("product_mcp_server", host="0.0.0.0", port=8001)
 
 @mcp.tool(
     name="currency_exchange_rate",

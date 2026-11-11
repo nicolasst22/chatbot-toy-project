@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     model_url: str
     model_api_key: str
     openai_api_key: str
+    mcp_server_url: str = "http://localhost:8001/mcp"
     environment: str = "production"
 
     model_config = SettingsConfigDict(

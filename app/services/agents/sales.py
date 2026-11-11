@@ -7,7 +7,8 @@ from langsmith import traceable
 from app.services.agents.tools import create_search_products_tool, create_price_stock_tool
 from app.core.config import settings, DEV_ENV
 from langchain_mcp_adapters.client import MultiServerMCPClient
-
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 
 system_prompt = """Eres un experto en hardware, con conocimientos profundos de productos y su compatibilidad que asesora al cliente para encontrar lo que necesita o busca.
 Responde la pregunta en base a los datos de herramientas y no inventes productos ni specs, ni precio, ni stock, nada de nada, solo utiliza información que te devuelven las tools. 
@@ -28,6 +29,8 @@ IMPORTANTE:
 * Rechazas amablemente otro tema de conversacion sea cual sea que no tenga objetivo la asistencia tecnica de venta, tal y como lo haria un vendedor que no quiere perder el tiempo
 * Si el la tool de search_productos no te devuelve resultados acorde a la los terminos del usuario utiliza un sinonimo. Ej placa madre = motherboard
 * Para la cotizacion utiliza tus herramientas. una vez que tengas el tipo de cambio multiplica el tipo de cambio por el valor en dolares y responde el valor al tipo de cambio actual indicando que tipo de cambio tomaste para el calculo. 
+* Si te consultan alguna caracteristica de un producto que conoces y desconoces la respuesta de esa caracteristica utiliza tus herramientas para buscar en la web y poder responder la pregunta. Si no consigues la respuesta responde que no tienes información, pero NUNCA inventes.
+* NO puedes registrar las compras, solo puedes asesorar e informar. NO ofrezcas registrar la compra.
 """
 logger = logging.getLogger(__name__)
 
@@ -38,11 +41,28 @@ AGENT_STOPPED_OUTPUT = "Agent stopped due to max iterations."
 server_config = {
     "servidor_local": {
         "transport": "streamable_http",
-        "url": "http://localhost:8001/mcp",
+        "url": settings.mcp_server_url,
     }
 }
 
 mcp_client = MultiServerMCPClient(server_config)
+
+
+class SafeDuckDuckGoSearch(DuckDuckGoSearchRun):
+    """DuckDuckGoSearchRun que no levanta excepción si la búsqueda falla (bloqueos, 429, DNS, etc.).
+    Devuelve un texto para que el LLM pueda seguir y responder que no tiene información."""
+
+    def _run(self, query, run_manager=None):
+        try:
+            return super()._run(query, run_manager)
+        except Exception:
+            logger.exception("Falló la búsqueda web (query=%r)", query)
+            return "No se pudo realizar la búsqueda web en este momento."
+
+
+web_search = SafeDuckDuckGoSearch(
+    api_wrapper=DuckDuckGoSearchAPIWrapper(backend="duckduckgo,yahoo,bing", max_results=5)
+)
 
 class SalesAgent:
     """
@@ -57,14 +77,13 @@ class SalesAgent:
 
     executor = None
     async def initialize(self):
-        mcp_tools = await mcp_client.get_tools();
-        print(mcp_tools)
-        self.tools = [self.search_products, self.get_price_stock] + mcp_tools
+        mcp_tools = await mcp_client.get_tools()
+        self.tools = [self.search_products, self.get_price_stock, web_search] + mcp_tools
         self.tool_names = ", ".join(t.name for t in self.tools)
         print(self.tool_names)
         agent = create_tool_calling_agent(self.llm, self.tools, self.prompt)
         self.executor = AgentExecutor(agent=agent, tools=self.tools, verbose=(settings.environment == DEV_ENV),
-                                               max_iterations=5, handle_parsing_errors=True)
+                                               max_iterations=15, handle_parsing_errors=True)
 
     def __init__(self, llm, retriever, db):
         self.llm = llm
