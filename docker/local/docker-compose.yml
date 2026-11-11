@@ -1,0 +1,31 @@
+version: "3.8"
+
+name: chatbot-toy
+
+services:
+  mcp:
+    build:
+      context: ../../mcp_products
+    networks:
+      - chatbot
+    ports:
+      - 8001:8001
+    restart: always
+  
+  bot:
+    build:
+      context: ../../
+    networks:
+      - chatbot
+    ports:
+      - 8000:8000
+    env_file:
+      - ../../.env
+    environment:
+    - MCP_SERVER_URL=http://mcp:8001/mcp
+    depends_on:
+      - mcp
+    restart: always
+
+networks:
+  chatbot:

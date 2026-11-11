@@ -1,0 +1,30 @@
+# --- Secretos: nunca deben entrar a la imagen ---
+.env
+.env.*
+!.env.example
+
+# --- Control de versiones y editor ---
+.git
+.gitignore
+.vscode/
+
+# --- Python: caches y entornos locales ---
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# --- No hacen falta para correr la app ---
+docs/
+tests/
+scripts/
+README.md
+
+# --- Datos que la app no lee en runtime ---
+# (la app usa data/chroma_db y data/db/tienda.db; se conservan)
+data/raw/
+
+# --- Archivos de Docker (no aportan dentro de la imagen) ---
+Dockerfile
+.dockerignore
