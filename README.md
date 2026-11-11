@@ -1,99 +1,125 @@
-# HW Chatbot Toy Proyect 
+# HW Chatbot Toy Project
 
-Chatbot de asesoría de hardware con un router y dos agentes: ventas (catálogo, precio y stock) y políticas de la tienda (FastAPI + LangChain + ChromaDB + SQLite).
+🇬🇧 English | 🇪🇸 [Español](README.es.md)
 
-## Cómo funciona
+Hardware advisory chatbot with a router and two agents: sales (catalog, price, stock, currency conversion and web search) and store policies (FastAPI + LangChain + ChromaDB + SQLite + MCP server).
 
-`POST /api/v1/bot/` → `ChatbotService` → `AgentRouter` → `SalesAgent` o `PoliciesAgent` (agentes con tool calling). El LLM de cada agente decide qué herramientas usar:
+## How it works
 
-| Agente | Tool | Fuente | Para qué |
+`POST /api/v1/bot/` → `ChatbotService` → `AgentRouter` → `SalesAgent` or `PoliciesAgent` (tool-calling agents). Each agent's LLM decides which tools to use:
+
+| Agent | Tool | Source | Purpose |
 |---|---|---|---|
-| `SalesAgent` | `search_products` | ChromaDB, colección `productos` (RAG, `k=20`) | Buscar productos, specs y compatibilidad. Devuelve también el SKU |
-| `SalesAgent` | `get_price_and_stock` | SQLite `data/db/tienda.db` (solo lectura) | Precio en USD y disponibilidad a partir del SKU |
-| `PoliciesAgent` | `search_policies` | ChromaDB, colección `politicas` (RAG, `k=5`) | Garantía, envíos, cambios y devoluciones, medios de pago, productos importados, servicio técnico, dirección y horarios |
+| `SalesAgent` | `search_products` | ChromaDB, `productos` collection (RAG, `k=20`) | Find products, specs and compatibility. Also returns the SKU |
+| `SalesAgent` | `get_price_and_stock` | SQLite `data/db/tienda.db` (read-only) | Price in USD and availability, from the SKU |
+| `SalesAgent` | `currency_exchange_rate` | Own MCP server (`mcp_products/`), which queries the [Frankfurter](https://frankfurter.dev) API | Exchange rate between two currencies (e.g. USD → ARS) to convert prices |
+| `SalesAgent` | `web_search` | DuckDuckGo (falling back to Yahoo and Bing) | Search the web for a spec the bot doesn't have for a product it does know |
+| `PoliciesAgent` | `search_policies` | ChromaDB, `politicas` collection (RAG, `k=5`) | Warranty, shipping, exchanges and returns, payment methods, imported products, technical service, address and opening hours |
 
-**Router** (`app/services/router.py`): elige el agente en tres capas. Primero por reglas (palabras clave de ventas o de políticas); si no hay un ganador claro, le pregunta al LLM; y si eso falla, usa `sales` como respaldo.
+**Router** (`app/services/router.py`): picks the agent in three layers. First by rules (sales or policy keywords); if there is no clear winner, it asks the LLM; and if that fails, it falls back to `sales`.
 
-- El precio y el stock se obtienen siempre en dos pasos: primero `search_products` (para el SKU) y después `get_price_and_stock`.
-- Los agentes responden solo con lo que devuelven sus tools. El de ventas no revela la cantidad exacta en stock y ambos rechazan temas fuera de su área.
-- La memoria es por `chat_id` y se comparte entre ambos agentes (`ConversationSummaryBufferMemory`, en RAM: se pierde al reiniciar el servidor).
+- Price and stock are always fetched in two steps: first `search_products` (to get the SKU), then `get_price_and_stock`.
+- To quote a price in pesos, the agent gets the exchange rate with `currency_exchange_rate` (MCP), multiplies it by the USD price and states which rate it used.
+- If the customer asks about a characteristic that the catalog doesn't have for a product that does exist, the sales agent looks it up on the web with `web_search`. If it can't find it either, it says it has no information (it doesn't make things up). If the search fails (blocks, 429, DNS), the bot says so instead of crashing.
+- Agents answer only with what their tools return. The sales agent never reveals the exact stock quantity, and both refuse topics outside their area.
+- Memory is per `chat_id` and shared between both agents (`ConversationSummaryBufferMemory`, in RAM: lost when the server restarts).
 
-## Requisitos
+## Requirements
 
-- Entorno conda con requirements desde requirements.txt (Python 3.13, langchain 1.x...)
-- Archivo `.env` en la raíz (copiar de `.env.example` y completar):
+- Conda environment with the dependencies from requirements.txt (Python 3.13, langchain 1.x...)
+- `.env` file in the project root (copy from `.env.example` and fill in):
 
-| Variable | Para qué |
+| Variable | Purpose |
 |---|---|
-| `MODEL_NAME`, `MODEL_URL`, `MODEL_API_KEY` | LLM del chat (OpenRouter u otro compatible con OpenAI) |
-| `OPENAI_API_KEY` | Embeddings de OpenAI para buscar en Chroma (Quizas lo cambie en el futuro para operar sin dependencia de openai) |
+| `MODEL_NAME`, `MODEL_URL`, `MODEL_API_KEY` | Chat LLM (OpenRouter or any OpenAI-compatible provider) |
+| `OPENAI_API_KEY` | OpenAI embeddings for searching Chroma (may change in the future to remove the OpenAI dependency) |
+| `MCP_SERVER_URL` | URL of the currency-conversion MCP server (local: `http://localhost:8001/mcp`; in Docker: `http://mcp:8001/mcp`) |
 
-Opcional: variables `LANGSMITH_*` en el `.env` para trazar las llamadas con LangSmith (`config.py` carga el `.env` en `os.environ` para eso).
+Optional: `LANGSMITH_*` variables in the `.env` to trace calls with LangSmith (`config.py` loads the `.env` into `os.environ` for this).
 
-Los datos ya están incluidos:
+The data is already included:
 
-- `data/chroma_db/` — base vectorial con las colecciones `productos` y `politicas`
-- `data/raw/politicas/` — documentos de políticas (markdown), origen de la colección `politicas`. Se cargan con `python scripts/ingest_policies.py`
-- `data/raw/otros/` — documentos de apoyo que hoy no usa la app (glosario de abreviaturas, stock y reservas)
-- `data/db/tienda.db` — SQLite con `productos`, `categorias`, `equivalencias`, `cotizacion`, `zonas_envio` y las vistas `v_disponibles` y `v_alternativas_con_stock`
-- `data/raw/productos.json` — catálogo original, solo de referencia (la app no lo lee; usa Chroma y `tienda.db`)
+- `data/chroma_db/` — vector store with the `productos` and `politicas` collections
+- `data/raw/politicas/` — policy documents (markdown), source of the `politicas` collection. Load them with `python scripts/ingest_policies.py`
+- `data/raw/otros/` — supporting documents the app doesn't currently use (abbreviations glossary, stock and reservations)
+- `data/db/tienda.db` — SQLite with `productos`, `categorias`, `equivalencias`, `cotizacion`, `zonas_envio` and the views `v_disponibles` and `v_alternativas_con_stock`
+- `data/raw/productos.json` — original catalog, for reference only (the app doesn't read it; it uses Chroma and `tienda.db`)
 
-## Iniciar
+## Getting started
 
-Desde la raíz del proyecto:
+Install dependencies (first time only): `pip install -r requirements.txt` (and `pip install -r mcp_products/requirements.txt` for the MCP server).
+
+### Local
+
+Two processes are needed, both from the project root. First the MCP server (port 8001), then the app:
 
 ```powershell
+python mcp_products/mcp_server.py
 uvicorn app.main:app --reload
 ```
 
-Instalar dependencias (solo la primera vez): `pip install -r requirements.txt`
+If the MCP server isn't running, the sales agent can't initialize its tools.
+
+### Docker
+
+```powershell
+docker compose -f docker/local/docker-compose.yml up --build
+```
+
+This starts `mcp` (port 8001) and `bot` (port 8000), which uses the `.env` in the project root and reaches the MCP server through `MCP_SERVER_URL=http://mcp:8001/mcp`.
 
 ## URLs
 
-- `http://127.0.0.1:8000/` — página del chat
+- `http://127.0.0.1:8000/` — chat page
 - `http://127.0.0.1:8000/docs` — Swagger
-- `http://127.0.0.1:8000/health` — chequeo rápido
+- `http://127.0.0.1:8000/health` — quick health check
 
 ## API
 
 `POST /api/v1/bot/`
 
 ```json
-{ "chat_id": "user-123", "message": "¿Tenés motherboards con wifi?" }
+{ "chat_id": "user-123", "message": "Do you have motherboards with wifi?" }
 ```
 
-Respuesta:
+Response:
 
 ```json
 { "chat_id": "user-123", "response": "..." }
 ```
 
-## Estructura
+## Project structure
 
 ```
 app/
-  main.py                      # entrada FastAPI (/health, / → chatbot.html)
+  main.py                      # FastAPI entry point (/health, / → chatbot.html)
   api/
-    router.py                  # agrupa los routers
-    routes/bot.py              # endpoint del chat
+    router.py                  # groups the routers
+    routes/bot.py              # chat endpoint
   models/chatbot.py            # ChatRequest / ChatResponse
   services/
-    chatService.py             # ChatbotService: LLM, Chroma, memorias por chat_id, router y agentes
-    router.py                  # AgentRouter: reglas, LLM y respaldo
+    chatService.py             # ChatbotService: LLM, Chroma, per-chat_id memories, router and agents
+    router.py                  # AgentRouter: rules, LLM and fallback
     agents/
-      sales.py                 # SalesAgent: system prompt + AgentExecutor
+      sales.py                 # SalesAgent: system prompt + AgentExecutor; MCP tools and web search (DuckDuckGo)
       policies.py              # PoliciesAgent: system prompt + AgentExecutor
-      tools.py                 # search_products, get_price_and_stock y search_policies
+      tools.py                 # search_products, get_price_and_stock and search_policies
   helpers/
-    retriever_with_specs.py    # RetrieverWithSpecs: agrega las specs a los documentos del retriever
-  core/config.py               # settings desde .env, DB_PATH
-  static/chatbot.html          # UI del chat
-scripts/ingest_policies.py     # carga data/raw/politicas en la colección politicas
-tests/test_router.py           # tests del router (python -m pytest)
+    retriever_with_specs.py    # RetrieverWithSpecs: adds the specs to the retriever's documents
+  core/config.py               # settings from .env, DB_PATH
+  static/chatbot.html          # chat UI
+mcp_products/
+  mcp_server.py                # MCP server (FastMCP, streamable-http, :8001): currency_exchange_rate tool
+  Dockerfile, requirements.txt
+docker/
+  local/docker-compose.yml     # mcp + bot
+Dockerfile                     # app build
+scripts/ingest_policies.py     # loads data/raw/politicas into the politicas collection
+tests/test_router.py           # router tests (python -m pytest)
 data/
-  chroma_db/                   # base vectorial (productos y politicas)
-  db/tienda.db                 # precios y stock
-  raw/productos.json           # catálogo original (solo referencia)
-  raw/politicas/               # documentos de políticas
-  raw/otros/                   # documentos de apoyo (no usados por la app)
+  chroma_db/                   # vector store (productos and politicas)
+  db/tienda.db                 # prices and stock
+  raw/productos.json           # original catalog (reference only)
+  raw/politicas/               # policy documents
+  raw/otros/                   # supporting documents (not used by the app)
 ```
